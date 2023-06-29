@@ -176,8 +176,14 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
         BasisFunctionEvaluations.append(uu*(1/np.sqrt(W.reshape(-1,1))))
         GroundTruth.append(BasisFunctionEvaluations[i].T@W)
 
-    plot_original_function_1D(X,FunctionEvaluations)
-    plot_basis_functions_1D(X,BasisFunctionEvaluations)
+    if function_to_use==1:
+        function_outputs = 1
+    else:
+        function_outputs = 2
+
+    for component in range(function_outputs):
+        plot_original_function_1D(X,FunctionEvaluations,component)
+        plot_basis_functions_1D(X,BasisFunctionEvaluations,component)
 
 
     A = list_to_mat(BasisFunctionEvaluations)
@@ -270,10 +276,10 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
 
 if __name__=='__main__':
 
-    number_of_functions = 2
-    number_of_candidate_Gauss_points = 20
+    number_of_functions = 20
+    number_of_candidate_Gauss_points = 50
 
-    function_to_use = 1 # 1 or 2
+    function_to_use = 2 # 1 or 2
     swap_functions = False # True or False. This changes the order of the functions to integrate
     constrain_sum_of_weights = True
 
