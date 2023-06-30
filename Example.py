@@ -167,8 +167,8 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
         else:
             Abar = function_2(X,i)
         FunctionEvaluations.append(Abar)
-        AbarW = np.sqrt(W).reshape(-1,1)* Abar
-        uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(AbarW)
+        Abar = np.sqrt(W).reshape(-1,1)* Abar
+        uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
         BasisFunctionEvaluations.append(uu*(1/np.sqrt(W.reshape(-1,1))))
         GroundTruth.append(BasisFunctionEvaluations[i].T@W)
 
