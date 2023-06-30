@@ -207,7 +207,7 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
     indexes_local_ecm, weights_local_ecm = local_ecm(FunctionEvaluations, W, swap_functions, constrain_sum_of_weights)
     plot_sparsity(weights_local_ecm.T, 'local_ecm')
     weights_local_ecm = weights_local_ecm.T.reshape(-1)
-    indexes_local_ecm = np.where(weights_local_ecm > np.zeros(weights_local_ecm.shape)+1e-6)
+    indexes_local_ecm = np.where(weights_local_ecm > np.zeros(weights_local_ecm.shape)+1e-8)
     weights_local_ecm = weights_local_ecm[indexes_local_ecm]
 
 
