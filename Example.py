@@ -198,7 +198,7 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
         matrix = (res.x).reshape(n,M)
         lp_matrices.append(matrix)
     plot_lp_sparsity(lp_matrices,methods,'sparsity_linear_programming')
-    indexes_lp = np.where(res.x > np.zeros(res.x.shape)+1e-6)
+    indexes_lp = np.where(res.x > np.zeros(res.x.shape)+1e-8)
     weights_lp = res.x[indexes_lp]
 
 
