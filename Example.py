@@ -80,14 +80,12 @@ def local_ecm(Matrixlist, vectorlist, swap_functions, constrain_sum_of_weights )
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
         uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
         hyper_reduction_element_selector.SetUp( vv.T, Weights=vectorlist,InitialCandidatesSet = z, constrain_sum_of_weights=constrain_sum_of_weights)  #add again z
-        hyper_reduction_element_selector.Initialize()
-        hyper_reduction_element_selector.Calculate()
+        hyper_reduction_element_selector.Run()
         if not hyper_reduction_element_selector.success:
             unsuccesfull_index+=1
             hyper_reduction_element_selector = EmpiricalCubatureMethod()
             hyper_reduction_element_selector.SetUp(vv.T, Weights=vectorlist, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights)
-            hyper_reduction_element_selector.Initialize()
-            hyper_reduction_element_selector.Calculate()
+            hyper_reduction_element_selector.Run()
         w_i[i] = np.squeeze(hyper_reduction_element_selector.w)
         z_i[i] = np.squeeze(hyper_reduction_element_selector.z)
         if z is None:
@@ -119,8 +117,7 @@ def independent_ecms(Matrixlist, vectorlist):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
         uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
         hyper_reduction_element_selector.SetUp(vv.T, Weights=vectorlist)
-        hyper_reduction_element_selector.Initialize()
-        hyper_reduction_element_selector.Calculate()
+        hyper_reduction_element_selector.Run()
         w_i.append(np.squeeze(hyper_reduction_element_selector.w))
         z_i.append(np.squeeze(hyper_reduction_element_selector.z))
     return z_i, w_i
@@ -134,8 +131,7 @@ def global_ecm(GlobalMatrix, vectorlist):
     uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(integrand)
     hyper_reduction_element_selector = EmpiricalCubatureMethod()
     hyper_reduction_element_selector.SetUp( vv.T , Weights=vectorlist )
-    hyper_reduction_element_selector.Initialize()
-    hyper_reduction_element_selector.Calculate()
+    hyper_reduction_element_selector.Run()
     return hyper_reduction_element_selector.z, hyper_reduction_element_selector.w
 
 
