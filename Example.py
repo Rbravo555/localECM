@@ -65,7 +65,7 @@ def list_to_vec(list_of_np_arrays):
 
 
 
-def local_ecm(Matrixlist, vectorlist, swap_functions, constrain_sum_of_weights ):
+def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights ):
     Number_Of_Clusters = len(Matrixlist)
     z_i = []
     w_i = []
@@ -79,12 +79,12 @@ def local_ecm(Matrixlist, vectorlist, swap_functions, constrain_sum_of_weights )
     for i in range(Number_Of_Clusters):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
         uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
-        hyper_reduction_element_selector.SetUp( vv.T, Weights=vectorlist,InitialCandidatesSet = z, constrain_sum_of_weights=constrain_sum_of_weights)  #add again z
+        hyper_reduction_element_selector.SetUp( vv.T, Weights=W,InitialCandidatesSet = z, constrain_sum_of_weights=constrain_sum_of_weights)
         hyper_reduction_element_selector.Run()
         if not hyper_reduction_element_selector.success:
             unsuccesfull_index+=1
             hyper_reduction_element_selector = EmpiricalCubatureMethod()
-            hyper_reduction_element_selector.SetUp(vv.T, Weights=vectorlist, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights)
+            hyper_reduction_element_selector.SetUp(vv.T, Weights=W, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights)
             hyper_reduction_element_selector.Run()
         w_i[i] = np.squeeze(hyper_reduction_element_selector.w)
         z_i[i] = np.squeeze(hyper_reduction_element_selector.z)
@@ -109,14 +109,14 @@ def local_ecm(Matrixlist, vectorlist, swap_functions, constrain_sum_of_weights )
 
 
 
-def independent_ecms(Matrixlist, vectorlist):
+def independent_ecms(Matrixlist, W):
     Number_Of_Clusters = len(Matrixlist)
     z_i = []
     w_i = []
     for i in range(Number_Of_Clusters):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
         uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
-        hyper_reduction_element_selector.SetUp(vv.T, Weights=vectorlist)
+        hyper_reduction_element_selector.SetUp(vv.T, Weights=W)
         hyper_reduction_element_selector.Run()
         w_i.append(np.squeeze(hyper_reduction_element_selector.w))
         z_i.append(np.squeeze(hyper_reduction_element_selector.z))
@@ -126,11 +126,11 @@ def independent_ecms(Matrixlist, vectorlist):
 
 
 
-def global_ecm(GlobalMatrix, vectorlist):
+def global_ecm(GlobalMatrix, W):
     integrand = np.block(GlobalMatrix).T
     uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(integrand)
     hyper_reduction_element_selector = EmpiricalCubatureMethod()
-    hyper_reduction_element_selector.SetUp( vv.T , Weights=vectorlist )
+    hyper_reduction_element_selector.SetUp( vv.T , Weights=W )
     hyper_reduction_element_selector.Run()
     return hyper_reduction_element_selector.z, hyper_reduction_element_selector.w
 

@@ -67,8 +67,7 @@ class EmpiricalCubatureMethod():
         """
         Method performing calculations required before launching the Calculate method
         """
-        self.Gnorm = np.linalg.norm(self.G[:self.add_constrain_count,:], axis = 0)#np.sqrt(sum(np.multiply(self.G, self.G), 0))
-        #aaaa = np.sqrt(sum(np.multiply(self.G[:self.add_constrain_count,:], self.G[:self.add_constrain_count,:]), 0))
+        self.Gnorm = np.linalg.norm(self.G[:self.add_constrain_count,:], axis = 0)
         M = np.shape(self.G)[1]
         normB = np.linalg.norm(self.b)
 
@@ -78,7 +77,7 @@ class EmpiricalCubatureMethod():
             if self.Filter_tolerance > 0:
                 TOL_REMOVE = self.Filter_tolerance * normB
                 rmvpin = np.where(self.Gnorm[self.y] < TOL_REMOVE)
-                self.y_complement = self.y[rmvpin] #TODO add this? Joaquin has it
+                self.y_complement = self.y[rmvpin]
                 self.y = np.delete(self.y,rmvpin)
         else:
             self.y_complement = np.arange(0,M,1)
