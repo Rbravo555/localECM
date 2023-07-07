@@ -4,7 +4,7 @@ from scipy.special.orthogonal import p_roots
 from scipy.optimize import linprog
 from empirical_cubature_method import EmpiricalCubatureMethod
 from randomized_singular_value_decomposition import RandomizedSingularValueDecomposition
-from plot_scripts import plot_original_function_1D, plot_basis_functions_1D, plot_sparsity, plot_lp_sparsity,plot_ground_truth
+from plot_scripts import *
 
 
 
@@ -65,7 +65,7 @@ def list_to_vec(list_of_np_arrays):
 
 
 
-def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights ):
+def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights , use_L2_weighting ):
     Number_Of_Clusters = len(Matrixlist)
     z_i = []
     w_i = []
@@ -78,23 +78,33 @@ def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights ):
         Matrixlist = Matrixlist[::-1]
     for i in range(Number_Of_Clusters):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
-        uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
-        hyper_reduction_element_selector.SetUp( vv.T, Weights=W,InitialCandidatesSet = z, constrain_sum_of_weights=constrain_sum_of_weights)
+
+        if use_L2_weighting:
+            Abar = np.sqrt(W).reshape(-1,1) * Matrixlist[i]
+        else:
+            Abar = Matrixlist[i]
+        U_bar, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
+        hyper_reduction_element_selector.SetUp( U_bar.T, Weights=W,InitialCandidatesSet = z, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
         hyper_reduction_element_selector.Run()
         if not hyper_reduction_element_selector.success:
             unsuccesfull_index+=1
             hyper_reduction_element_selector = EmpiricalCubatureMethod()
-            hyper_reduction_element_selector.SetUp(vv.T, Weights=W, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights)
+            hyper_reduction_element_selector.SetUp(U_bar.T, Weights=W, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
             hyper_reduction_element_selector.Run()
         w_i[i] = np.squeeze(hyper_reduction_element_selector.w)
         z_i[i] = np.squeeze(hyper_reduction_element_selector.z)
+
+        print('the sum of the weights is: ', np.sum(np.squeeze(hyper_reduction_element_selector.w)))
+
         if z is None:
             z = z_i[i]
         else:
             z = np.union1d(z,z_i[i])
+
     if swap_functions ==True:
         w_i = w_i[::-1]
         z_i = z_i[::-1]
+
     WeightsMatrix = np.zeros(( (Matrixlist[0].shape)[0],Number_Of_Clusters))
     for i in range(Number_Of_Clusters):
         for j in range(np.size(z_i[i])):
@@ -103,36 +113,83 @@ def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights ):
             except:
                 #single number found
                 WeightsMatrix[z_i[i], i] = w_i[i]
+
     return z, WeightsMatrix
 
 
 
 
 
-def independent_ecms(Matrixlist, W):
+def independent_ecms(Matrixlist, W, constrain_sum_of_weights, use_L2_weighting):
     Number_Of_Clusters = len(Matrixlist)
-    z_i = []
-    w_i = []
+    Number_Of_Gauss_Points = np.size(W)
+    WeightsMatrix = np.zeros((Number_Of_Clusters,Number_Of_Gauss_Points))
+
     for i in range(Number_Of_Clusters):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
-        uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Matrixlist[i].T)
-        hyper_reduction_element_selector.SetUp(vv.T, Weights=W)
+        if use_L2_weighting:
+            Abar = np.sqrt(W).reshape(-1,1) * Matrixlist[i]
+        else:
+            Abar = Matrixlist[i]
+        U_bar, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
+        print(i)
+        hyper_reduction_element_selector.SetUp(U_bar.T, Weights=W, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
         hyper_reduction_element_selector.Run()
-        w_i.append(np.squeeze(hyper_reduction_element_selector.w))
-        z_i.append(np.squeeze(hyper_reduction_element_selector.z))
-    return z_i, w_i
+        sum_weights = np.sum(hyper_reduction_element_selector.w)
+        if not np.isclose(sum_weights, 1, atol=0.001):
+            print(i)
+            debug=True
+        print('sum of weights = ', sum_weights)
+        print(hyper_reduction_element_selector.w)
+        print(hyper_reduction_element_selector.z)
+        WeightsMatrix[i, hyper_reduction_element_selector.z] = (hyper_reduction_element_selector.w).flatten()
+
+    return WeightsMatrix
 
 
 
 
 
-def global_ecm(GlobalMatrix, W):
-    integrand = np.block(GlobalMatrix).T
-    uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(integrand)
+def global_ecm(GlobalMatrix, W,constrain_sum_of_weights, use_L2_weighting):
+
+    integrand = np.block(GlobalMatrix)
+    if use_L2_weighting:
+        Abar = np.sqrt(W).reshape(-1,1) * integrand
+    else:
+        Abar = integrand
+    U_bar, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
     hyper_reduction_element_selector = EmpiricalCubatureMethod()
-    hyper_reduction_element_selector.SetUp( vv.T , Weights=W )
+    hyper_reduction_element_selector.SetUp( U_bar.T , Weights=W, constrain_sum_of_weights=constrain_sum_of_weights )
     hyper_reduction_element_selector.Run()
-    return hyper_reduction_element_selector.z, hyper_reduction_element_selector.w
+
+
+    Number_Of_Clusters = len(GlobalMatrix)
+    Number_Of_Gauss_Points = np.size(W)
+    WeightsMatrix = np.zeros((Number_Of_Clusters,Number_Of_Gauss_Points))
+    WeightsMatrix[:, hyper_reduction_element_selector.z] = (hyper_reduction_element_selector.w).flatten()
+
+    return WeightsMatrix
+
+
+
+
+
+def GetSparsestSolution(list_of_weights, methods=[None]):
+
+    sparsest_index = 0
+    sparsest_solution = np.shape(list_of_weights[sparsest_index])[1]
+
+    for i in range(len(list_of_weights)):
+        sparsity = np.linalg.norm( np.sum(list_of_weights[i], axis = 0) , 0 )
+        if  sparsity < sparsest_solution :
+            sparsest_solution = sparsity
+            sparsest_index = i
+
+
+    return sparsest_solution, methods[sparsest_index], sparsest_index
+
+
+
 
 
 
@@ -150,13 +207,15 @@ def function_2(X,power):
 
 
 
-def run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights):
+def run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights, use_L2_weighting):
     n = number_of_functions
     M = number_of_candidate_Gauss_points
 
     FunctionEvaluations = []
     BasisFunctionEvaluations = []
     GroundTruth = []
+    ExactIntegral = []
+    PointsWithNonZeroWeights = {}
 
     [X,W] = gauss_quad(M) #Gauss points and weights as candidates
 
@@ -171,6 +230,7 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
         uu, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
         BasisFunctionEvaluations.append(uu*(1/np.sqrt(W.reshape(-1,1))))
         GroundTruth.append(BasisFunctionEvaluations[i].T@W)
+        ExactIntegral.append(FunctionEvaluations[i].T@W)
 
     if function_to_use==1:
         function_outputs = 1
@@ -182,29 +242,17 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
         plot_basis_functions_1D(X,BasisFunctionEvaluations,component)
 
 
-    A = list_to_mat(BasisFunctionEvaluations)
-    b = list_to_vec(GroundTruth)
+    A = list_to_mat(FunctionEvaluations)
+    b = list_to_vec(ExactIntegral)
+    U_tilde = list_to_mat(BasisFunctionEvaluations)
+    d_tilde = list_to_vec(GroundTruth)
     c = np.ones(M*n)
-
-
-    ### LP
-    lp_matrices = []
-    methods = ['highs' , 'highs-ds', 'highs-ipm', 'interior-point' , 'revised simplex' , 'simplex', '']
-    for i in range(6):
-        res = linprog(c, A_eq=A.T, b_eq=b, bounds=(0, None), method=methods[i] )
-        #this makes the values very close to zero dissapear
-        indexes_lp = np.where(res.x < np.zeros(res.x.shape)+1e-8)[0]
-        res.x [indexes_lp]=0
-        matrix = (res.x).reshape(n,M)
-        lp_matrices.append(matrix)
-    plot_lp_sparsity(lp_matrices,methods,'sparsity_linear_programming')
-    indexes_lp = np.where(res.x > np.zeros(res.x.shape)+1e-8)
-    weights_lp = res.x[indexes_lp]
 
 
 
     ### Local ECM
-    indexes_local_ecm, weights_local_ecm = local_ecm(FunctionEvaluations, W, swap_functions, constrain_sum_of_weights)
+    indexes_local_ecm, weights_local_ecm = local_ecm(FunctionEvaluations, W, swap_functions, constrain_sum_of_weights, use_L2_weighting)
+    PointsWithNonZeroWeights["LocalECM"], _, _ = GetSparsestSolution([weights_local_ecm.T])
     plot_sparsity(weights_local_ecm.T, 'local_ecm')
     weights_local_ecm = weights_local_ecm.T.reshape(-1)
     indexes_local_ecm = np.where(weights_local_ecm > np.zeros(weights_local_ecm.shape)+1e-8)
@@ -213,58 +261,103 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
 
 
 
+    ### GlobalECM
+    global_ecm_weights_matrix = global_ecm(FunctionEvaluations, W, constrain_sum_of_weights, use_L2_weighting)
+    PointsWithNonZeroWeights["GlobalECM"], _, _ = GetSparsestSolution([global_ecm_weights_matrix])
+    plot_sparsity(global_ecm_weights_matrix, 'global')
+    global_ecm_weights_vector = global_ecm_weights_matrix.flatten()
+    indexes_global_ecm = np.where( global_ecm_weights_vector > 0)[0]
+    weights_global_ecm = global_ecm_weights_vector[indexes_global_ecm]
+
+
+
+
+
     ### Multiple indepenent ECMs
-    index_list_independent_ecms, weight_list_independent_ecm  = independent_ecms(FunctionEvaluations, W)
-    matrix = np.zeros(matrix.shape)
-    for i in range(n):
-        matrix[i, index_list_independent_ecms[i]] = 1
-    plot_sparsity(matrix, 'multiple_independent')
+    independent_ecms_weights_matrix = independent_ecms(FunctionEvaluations, W, constrain_sum_of_weights, use_L2_weighting)
+    PointsWithNonZeroWeights["IndependentECMs"], _, _ = GetSparsestSolution([independent_ecms_weights_matrix])
+    plot_sparsity(independent_ecms_weights_matrix, 'multiple_independent')
+    independent_ecms_weights_vector = independent_ecms_weights_matrix.flatten()
+    indexes_independent_ecms = np.where( independent_ecms_weights_vector > 0)[0]
+    weights_independent_ecms = independent_ecms_weights_vector[indexes_independent_ecms]
 
 
 
 
-    ### Solving a single globalECM problem
-    index_single_ecm, weights_single_ecm  = global_ecm(FunctionEvaluations, W)
-    matrix = np.zeros(matrix.shape)
-    for i in range(len(index_single_ecm)):
-        matrix[:, index_single_ecm[i]] = 1
-    plot_sparsity(matrix, 'global')
+
+    ### LP
+    lp_matrices = []
+    methods = ['highs' , 'highs-ds', 'highs-ipm', 'interior-point' , 'revised simplex' , 'simplex']
+    for i in range(6):
+        res = linprog(c, A_eq=U_tilde.T, b_eq=d_tilde, bounds=(0, None), method=methods[i] )
+        indexes_lp = np.where(res.x < np.zeros(res.x.shape)+1e-8)[0] #this makes the values very close to zero dissapear
+        res.x [indexes_lp]=0
+        matrix = (res.x).reshape(n,M)
+        lp_matrices.append(matrix)
+    plot_lp_sparsity(lp_matrices,methods,'sparsity_linear_programming')
+    number_points_selected_lp, sparsest_lp_name, sparsest_lp_index = GetSparsestSolution(lp_matrices, methods)
+    PointsWithNonZeroWeights["LP "+sparsest_lp_name] = number_points_selected_lp
+    lp_solution = lp_matrices[sparsest_lp_index].flatten()
+    indexes_lp = np.where( lp_solution > 0)[0]
+    weights_lp = lp_solution[indexes_lp]
+
 
 
 
     #Check LP approximation
-    lp = A[indexes_lp].T@weights_lp
-
-
+    lp = U_tilde[indexes_lp].T@weights_lp
+    lp_exact_integral = A[indexes_lp].T@weights_lp
 
     #Check Local ECM approximation
-    local_ecm_approximation = A[indexes_local_ecm].T@weights_local_ecm
+    local_ecm_approximation = U_tilde[indexes_local_ecm].T@weights_local_ecm
+    local_ecm_exact_integral = A[indexes_local_ecm].T@weights_local_ecm
 
-
-
-    #Check Independent ECMs
-    independent_ecm_approximation = []
-    for i in range(n):
-        if i ==0:
-            independent_ecm_approximation = (BasisFunctionEvaluations[i].T[:,index_list_independent_ecms[i]]@ weight_list_independent_ecm[i].reshape(-1,1)).reshape(-1,1)
-        else:
-            independent_ecm_approximation = np.r_[independent_ecm_approximation, ( BasisFunctionEvaluations[i].T[:,index_list_independent_ecms[i]]@weight_list_independent_ecm[i].reshape(-1,1)).reshape(-1,1)  ]   #ppend(np.squeeze(A_i[i][index_list_independent_ecms[i]]*weight_list_independent_ecm[i]))
-
+    # #Check Independent ECMs
+    independent_ecm_approximation = U_tilde[indexes_independent_ecms].T@weights_independent_ecms
+    independent_ecm_exact_integral = A[indexes_independent_ecms].T@weights_independent_ecms
 
 
     #Check Global ECM
-    integrand = np.block(BasisFunctionEvaluations).T
-    global_ecm_approximation = integrand[:,index_single_ecm]@weights_single_ecm
+    global_ecm_approximation = U_tilde[indexes_global_ecm].T@weights_global_ecm
+    global_ecm_exact_integral = A[indexes_global_ecm].T@weights_global_ecm
 
 
+    #plotting number of selected points
+    plot_selected_points_histogram(PointsWithNonZeroWeights)
 
-    # print all approximations
-    for i in range(n):
-        print('exact:', b[i][0], 'local ecm:', local_ecm_approximation[i], '  lp: ', lp[i], 'independent ecms', independent_ecm_approximation[i],'  global ecm', global_ecm_approximation[i])
+    #ground truth U_tilde.T@W
+    saving_title = 'ground_truth_approximation'
+    data = [d_tilde, lp, global_ecm_approximation, independent_ecm_approximation,local_ecm_approximation]
+    labels = ['ground truth', 'lp '+sparsest_lp_name,'global ecm','independent ecms','local ecm']
+    ylabel = r'$\int u^{(i)} dx$'
+    xlabel = r'$\tilde{d}_j$'
+    plot_approximations(data, labels, ylabel, xlabel, saving_title)
 
+    #error on ground truth approximation
+    saving_title = 'ground_truth_error'
+    d_tilde = d_tilde.flatten()
+    data = [lp-d_tilde, global_ecm_approximation-d_tilde, independent_ecm_approximation-d_tilde,local_ecm_approximation-d_tilde]
+    labels = ['lp '+sparsest_lp_name,'global ecm','independent ecms','local ecm']
+    ylabel = r'error'
+    xlabel = r'$\tilde{d}_j$'
+    plot_approximations(data, labels, ylabel, xlabel, saving_title)
 
-    #plotting all approximations
-    plot_ground_truth([b, lp, global_ecm_approximation, independent_ecm_approximation,local_ecm_approximation], ['exact', 'lp','global ecm','independent ecms','local ecm'])
+    #exact integral approximation A.T@W
+    saving_title = 'exact_integral_approximation'
+    data = [b, lp_exact_integral, global_ecm_exact_integral, independent_ecm_exact_integral,local_ecm_exact_integral]
+    labels = ['exact', 'lp '+sparsest_lp_name,'global ecm','independent ecms','local ecm']
+    ylabel = r'$\int a^{(i)} dx$'
+    xlabel = r'$\tilde{b}_j$'
+    plot_approximations(data, labels, ylabel, xlabel, saving_title)
+
+    #error on exact integral approximation
+    b = b.flatten()
+    saving_title = 'exact_integral_error'
+    data = [lp_exact_integral-b, global_ecm_exact_integral-b, independent_ecm_exact_integral-b,local_ecm_exact_integral-b]
+    labels = ['lp '+sparsest_lp_name,'global ecm','independent ecms','local ecm']
+    ylabel = r'error'
+    xlabel = r'$\tilde{b}_j$'
+    plot_approximations(data, labels, ylabel, xlabel, saving_title)
 
 
 
@@ -276,7 +369,9 @@ if __name__=='__main__':
     number_of_candidate_Gauss_points = 50
 
     function_to_use = 2 # 1 or 2
-    swap_functions = False # True or False. This changes the order of the functions to integrate
+    swap_functions = False # True or False. This swaps the order of the functions to integrate
     constrain_sum_of_weights = True
 
-    run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights)
+    use_L2_weighting = False  # if True: d = G@\sqrt{W}; elif False: d = G@W
+
+    run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights, use_L2_weighting)
