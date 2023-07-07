@@ -40,6 +40,7 @@ class EmpiricalCubatureMethod():
         Weights,
         constrain_sum_of_weights = False,
         InitialCandidatesSet = None,
+        use_L2_weighting = False
     ):
         """
         Method for setting up the element selection
@@ -49,15 +50,21 @@ class EmpiricalCubatureMethod():
         self.G = G
         self.y = InitialCandidatesSet
         self.add_constrain_count = None
+        self.use_L2_weighting = use_L2_weighting
         if constrain_sum_of_weights:
             #This avoids the trivial solution w = 0
             constant_function = np.ones(np.shape(self.G)[1])
             projection_of_constant_function_on_col_G = constant_function - self.G.T@( self.G @ constant_function)
-            if np.linalg.norm(projection_of_constant_function_on_col_G)>1e-10:
-                projection_of_constant_function_on_col_G/= np.linalg.norm(projection_of_constant_function_on_col_G)
+            norm_projection = np.linalg.norm(projection_of_constant_function_on_col_G)
+            print('norm of projections: ',norm_projection)
+            if norm_projection>1e-10:
+                projection_of_constant_function_on_col_G/= norm_projection
                 self.G = np.vstack([ self.G , projection_of_constant_function_on_col_G] )
                 self.add_constrain_count = -1
-        self.b = self.G @ self.W
+        if self.use_L2_weighting:
+            self.b = self.G @ np.sqrt(self.W)
+        else:
+            self.b = self.G @ self.W
         self.UnsuccesfulIterations = 0
 
 
@@ -76,7 +83,7 @@ class EmpiricalCubatureMethod():
             if self.Filter_tolerance > 0:
                 TOL_REMOVE = self.Filter_tolerance * normB
                 rmvpin = np.where(self.Gnorm[self.y] < TOL_REMOVE)
-                self.y_complement = self.y[rmvpin]
+                #self.y_complement = self.y[rmvpin]
                 self.y = np.delete(self.y,rmvpin)
         else:
             self.y_complement = np.arange(0,M,1)
@@ -200,7 +207,13 @@ class EmpiricalCubatureMethod():
                 break
 
 
-        self.w = alpha #* np.sqrt(self.W[self.z])
+        if self.use_L2_weighting:
+            self.w = (alpha.T * np.sqrt(self.W[self.z])).T
+        else:
+            self.w = alpha
+
+
+
 
         print(f'Total number of iterations = {k}')
 
