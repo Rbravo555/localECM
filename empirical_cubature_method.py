@@ -19,7 +19,7 @@ class EmpiricalCubatureMethod():
     def __init__(
         self,
         ECM_tolerance = 0,
-        Filter_tolerance = 1e-16,
+        Filter_tolerance = 1e-6,
         Plotting = False,
         MaximumNumberUnsuccesfulIterations = 100
     ):
