@@ -56,7 +56,6 @@ class EmpiricalCubatureMethod():
             constant_function = np.ones(np.shape(self.G)[1])
             projection_of_constant_function_on_col_G = constant_function - self.G.T@( self.G @ constant_function)
             norm_projection = np.linalg.norm(projection_of_constant_function_on_col_G)
-            print('norm of projections: ',norm_projection)
             if norm_projection>1e-10:
                 projection_of_constant_function_on_col_G/= norm_projection
                 self.G = np.vstack([ self.G , projection_of_constant_function_on_col_G] )
@@ -96,7 +95,6 @@ class EmpiricalCubatureMethod():
         self.z = {}  # Set of intergration points
         self.mPOS = 0 # Number of nonzero weights
         self.r = self.b.copy() # residual vector
-        print(self.r.shape)
         self.m = len(self.b) # Default number of points
         self.nerror = np.linalg.norm(self.r)/normB
         self.nerrorACTUAL = self.nerror
@@ -110,7 +108,7 @@ class EmpiricalCubatureMethod():
         self.Calculate()
 
     def expand_candidates_with_complement(self):
-        self.y = np.union1d(self.y, self.y_complement)
+        self.y = np.r_[self.y,self.y_complement]
         print('expanding set to include the complement...')
         ExpandedSetFlag = True
         return ExpandedSetFlag
@@ -197,15 +195,13 @@ class EmpiricalCubatureMethod():
             MaximumLengthZ = max(MaximumLengthZ, np.size(self.z))
             k = k+1
 
-            if k>1000:
+            if k-MaximumLengthZ>1000 and ExpandedSetFlag:
                 """
                 this means using the initial candidate set, it was impossible to obtain a set of positive weights.
                 Try again without constraints!!!
-                TODO: incorporate this into greater workflow
                 """
                 self.success = False
                 break
-
 
         if self.use_L2_weighting:
             self.w = (alpha.T * np.sqrt(self.W[self.z])).T
