@@ -82,11 +82,10 @@ class EmpiricalCubatureMethod():
             if self.Filter_tolerance > 0:
                 TOL_REMOVE = self.Filter_tolerance * normB
                 rmvpin = np.where(self.Gnorm[self.y] < TOL_REMOVE)
-                #self.y_complement = self.y[rmvpin]
                 self.y = np.delete(self.y,rmvpin)
         else:
             self.y_complement = np.arange(0,M,1)
-            self.y_complement = np.delete(self.y_complement, self.y)# Set of candidate points (those whose associated column has low norm are removed)
+            self.y_complement = np.delete(self.y_complement, self.y)
             if self.Filter_tolerance > 0:
                 TOL_REMOVE = self.Filter_tolerance * normB
                 self.y_complement = np.delete(self.y_complement,np.where(self.Gnorm[self.y_complement] < TOL_REMOVE))
