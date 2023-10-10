@@ -18,7 +18,7 @@ class EmpiricalCubatureMethod():
     def __init__(
         self,
         ECM_tolerance = 0,
-        Filter_tolerance = 1e-6,
+        Filter_tolerance = 0,
         Plotting = False,
         MaximumNumberUnsuccesfulIterations = 100
     ):
@@ -89,8 +89,10 @@ class EmpiricalCubatureMethod():
             self.y_complement = np.delete(self.y_complement, self.y)# Set of candidate points (those whose associated column has low norm are removed)
             if self.Filter_tolerance > 0:
                 TOL_REMOVE = self.Filter_tolerance * normB
-                rmvpin = np.where(self.Gnorm[self.y_complement] < TOL_REMOVE)
-                self.y_complement = np.delete(self.y_complement,rmvpin)
+                self.y_complement = np.delete(self.y_complement,np.where(self.Gnorm[self.y_complement] < TOL_REMOVE))
+                self.y = np.delete(self.y,np.where(self.Gnorm[self.y] < TOL_REMOVE))
+                if np.size(self.y)==0:
+                    self.y=self.y_complement.copy()
 
         self.z = {}  # Set of intergration points
         self.mPOS = 0 # Number of nonzero weights
@@ -128,12 +130,12 @@ class EmpiricalCubatureMethod():
                 ExpandedSetFlag = self.expand_candidates_with_complement()
 
             #Step 1. Compute new point
-            if isinstance(self.y, np.int64) or isinstance(self.y, np.int32):
+            if np.size(self.y)==1:#, np.int64) or isinstance(self.y, np.int32):
                 indSORT = 0
-                i = self.y
+                i = int(self.y)
             else:
                 ObjFun = self.G[:,self.y].T @ self.r.T
-                ObjFun = ObjFun.T / self.Gnorm[self.y]
+                ObjFun = ObjFun.T # / self.Gnorm[self.y]
                 indSORT = np.argmax(ObjFun)
                 i = self.y[indSORT]
             if k==1:
@@ -148,7 +150,7 @@ class EmpiricalCubatureMethod():
             else:
                 self.z = np.r_[self.z,i]
 
-            if isinstance(self.y, np.int64) or isinstance(self.y, np.int32):
+            if np.size(self.y)==1:#isinstance(self.y, np.int64) or isinstance(self.y, np.int32):
                 self.expand_candidates_with_complement()
                 self.y = np.delete(self.y,indSORT)
             else:
@@ -208,10 +210,8 @@ class EmpiricalCubatureMethod():
         else:
             self.w = alpha
 
-
-
-
         print(f'Total number of iterations = {k}')
+
 
         if missing_matplotlib == False and self.Plotting == True:
             plt.plot(NPOINTS[0], ERROR_GLO[0])
