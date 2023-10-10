@@ -350,10 +350,10 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
 
 if __name__=='__main__':
 
-    number_of_functions = 20
-    number_of_candidate_Gauss_points = 50
+    number_of_functions = 6
+    number_of_candidate_Gauss_points = 20
 
-    function_to_use = 2 # 1 or 2
+    function_to_use = 1 # 1 or 2
     constrain_sum_of_weights = False #this avoids the trivial solution
     use_L2_weighting = True # True  # if True: d = G@\sqrt{W}; elif False: d = G@W
 
