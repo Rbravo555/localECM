@@ -64,8 +64,7 @@ def list_to_vec(list_of_np_arrays):
 
 
 
-
-def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights , use_L2_weighting ):
+def local_ecm(Matrixlist, W, constrain_sum_of_weights , use_L2_weighting ):
     Number_Of_Clusters = len(Matrixlist)
     z_i = []
     w_i = []
@@ -74,8 +73,6 @@ def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights , use_L2_w
         z_i.append([])
         w_i.append([])
     unsuccesfull_index = 0
-    if swap_functions ==True:
-        Matrixlist = Matrixlist[::-1]
     for i in range(Number_Of_Clusters):
         hyper_reduction_element_selector = EmpiricalCubatureMethod()
 
@@ -88,7 +85,6 @@ def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights , use_L2_w
         hyper_reduction_element_selector.Run()
         if not hyper_reduction_element_selector.success:
             unsuccesfull_index+=1
-            hyper_reduction_element_selector = EmpiricalCubatureMethod()
             hyper_reduction_element_selector.SetUp(U_bar.T, Weights=W, InitialCandidatesSet = None, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
             hyper_reduction_element_selector.Run()
         w_i[i] = np.squeeze(hyper_reduction_element_selector.w)
@@ -100,10 +96,6 @@ def local_ecm(Matrixlist, W, swap_functions, constrain_sum_of_weights , use_L2_w
             z = z_i[i]
         else:
             z = np.union1d(z,z_i[i])
-
-    if swap_functions ==True:
-        w_i = w_i[::-1]
-        z_i = z_i[::-1]
 
     WeightsMatrix = np.zeros(( (Matrixlist[0].shape)[0],Number_Of_Clusters))
     for i in range(Number_Of_Clusters):
@@ -132,16 +124,9 @@ def independent_ecms(Matrixlist, W, constrain_sum_of_weights, use_L2_weighting):
         else:
             Abar = Matrixlist[i]
         U_bar, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
-        print(i)
         hyper_reduction_element_selector.SetUp(U_bar.T, Weights=W, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
         hyper_reduction_element_selector.Run()
-        sum_weights = np.sum(hyper_reduction_element_selector.w)
-        if not np.isclose(sum_weights, 1, atol=0.001):
-            print(i)
-            debug=True
-        print('sum of weights = ', sum_weights)
-        print(hyper_reduction_element_selector.w)
-        print(hyper_reduction_element_selector.z)
+        print('sum of weights = ', np.sum(hyper_reduction_element_selector.w))
         WeightsMatrix[i, hyper_reduction_element_selector.z] = (hyper_reduction_element_selector.w).flatten()
 
     return WeightsMatrix
@@ -159,7 +144,7 @@ def global_ecm(GlobalMatrix, W,constrain_sum_of_weights, use_L2_weighting):
         Abar = integrand
     U_bar, ss, vv, ee = RandomizedSingularValueDecomposition().Calculate(Abar)
     hyper_reduction_element_selector = EmpiricalCubatureMethod()
-    hyper_reduction_element_selector.SetUp( U_bar.T , Weights=W, constrain_sum_of_weights=constrain_sum_of_weights )
+    hyper_reduction_element_selector.SetUp( U_bar.T , Weights=W, constrain_sum_of_weights=constrain_sum_of_weights, use_L2_weighting=use_L2_weighting)
     hyper_reduction_element_selector.Run()
 
 
@@ -207,7 +192,7 @@ def function_2(X,power):
 
 
 
-def run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights, use_L2_weighting):
+def run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, constrain_sum_of_weights, use_L2_weighting):
     n = number_of_functions
     M = number_of_candidate_Gauss_points
 
@@ -251,7 +236,7 @@ def run_example(number_of_functions, number_of_candidate_Gauss_points, function_
 
 
     ### Local ECM
-    indexes_local_ecm, weights_local_ecm = local_ecm(FunctionEvaluations, W, swap_functions, constrain_sum_of_weights, use_L2_weighting)
+    indexes_local_ecm, weights_local_ecm = local_ecm(FunctionEvaluations, W, constrain_sum_of_weights, use_L2_weighting)
     PointsWithNonZeroWeights["LocalECM"], _, _ = GetSparsestSolution([weights_local_ecm.T])
     plot_sparsity(weights_local_ecm.T, 'local_ecm')
     weights_local_ecm = weights_local_ecm.T.reshape(-1)
@@ -369,9 +354,7 @@ if __name__=='__main__':
     number_of_candidate_Gauss_points = 50
 
     function_to_use = 2 # 1 or 2
-    swap_functions = False # True or False. This swaps the order of the functions to integrate
-    constrain_sum_of_weights = True
+    constrain_sum_of_weights = False #this avoids the trivial solution
+    use_L2_weighting = True # True  # if True: d = G@\sqrt{W}; elif False: d = G@W
 
-    use_L2_weighting = False  # if True: d = G@\sqrt{W}; elif False: d = G@W
-
-    run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, swap_functions, constrain_sum_of_weights, use_L2_weighting)
+    run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, constrain_sum_of_weights, use_L2_weighting)
