@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 import skfuzzy as fuzz
 ###########
 
-#kmediods
+#kmedoids
 from sklearn_extra.cluster import KMedoids
 ######
 
@@ -44,14 +44,14 @@ def fuzzy_c_means(test_data):
     plt.savefig('fuzzy c-means clustering.pdf',bbox_inches='tight' )
     plt.show()
 
-def kmediods_test(test_data):
+def kmedoids_test(test_data):
     n_clusters = 5
     kmedoids_object = KMedoids(n_clusters=n_clusters,random_state=0).fit(test_data)
     for j in range(n_clusters):
         plt.scatter(test_data[:, 0][kmedoids_object.labels_==j], test_data[:, 1][kmedoids_object.labels_==j])
     centroids_to_plot = (kmedoids_object.cluster_centers_).T
     plt.scatter(centroids_to_plot[0,:], centroids_to_plot[1,:], c='k',marker="s", s=150)
-    plt.title(r"\textbf{k-mediods clustering}")
+    plt.title(r"\textbf{k-medoids clustering}")
     plt.savefig('k-medoids clustering.pdf',bbox_inches='tight' )
     plt.show()
 
@@ -168,6 +168,6 @@ if __name__=='__main__':
 
     #launch tests
     kmeans_test(test_data)
-    kmediods_test(test_data)
+    kmedoids_test(test_data)
     fuzzy_c_means(test_data)
     pebl_test(test_data)
