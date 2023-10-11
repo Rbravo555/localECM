@@ -52,7 +52,7 @@ def kmediods_test(test_data):
     centroids_to_plot = (kmedoids_object.cluster_centers_).T
     plt.scatter(centroids_to_plot[0,:], centroids_to_plot[1,:], c='k',marker="s", s=150)
     plt.title(r"\textbf{k-mediods clustering}")
-    plt.savefig('k-mediods clustering.pdf',bbox_inches='tight' )
+    plt.savefig('k-medoids clustering.pdf',bbox_inches='tight' )
     plt.show()
 
 
