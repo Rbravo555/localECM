@@ -40,3 +40,11 @@ if __name__ == '__main__':
 
     run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, constrain_sum_of_weights, use_L2_weighting)
 ```
+
+# Clustering comparison
+The comparison of the clustering techniques shown in our paper is also included in this repository by launching the [clustering_comparison.py](clustering_comparison.py) script.
+![Alt Text](README_data/clustering_techniques.png)
+
+
+
+
