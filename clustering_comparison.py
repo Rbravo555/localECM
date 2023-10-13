@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 import skfuzzy as fuzz
 ###########
 
-#kmediods
+#kmedoids
 from sklearn_extra.cluster import KMedoids
 ######
 
@@ -44,7 +44,7 @@ def fuzzy_c_means(test_data):
     plt.savefig('fuzzy c-means clustering.pdf',bbox_inches='tight' )
     plt.show()
 
-def kmediods_test(test_data):
+def kmedoids_test(test_data):
     n_clusters = 5
     kmedoids_object = KMedoids(n_clusters=n_clusters,random_state=0).fit(test_data)
     for j in range(n_clusters):
@@ -168,6 +168,6 @@ if __name__=='__main__':
 
     #launch tests
     kmeans_test(test_data)
-    kmediods_test(test_data)
+    kmedoids_test(test_data)
     fuzzy_c_means(test_data)
     pebl_test(test_data)
