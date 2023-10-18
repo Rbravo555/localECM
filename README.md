@@ -41,6 +41,24 @@ if __name__ == '__main__':
     run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, constrain_sum_of_weights, use_L2_weighting)
 ```
 
+# Example 1
+## Finite Elements Example (section 4.3)
+This example was launched using an in-house Matlab code which we do not provide here.
+
+![Alt Text](README_data/Modes.png)
+
+An observation that we highlight in our paper is the limit case (having as many bases as snapshots) following the trajectory shown next
+
+![Alt Text](README_data/TrainingTrajectory.png)
+
+
+Here is the evolution of the weights mentioned. 
+
+<p align="center">
+  <img src="https://github.com/Rbravo555/localECM/blob/main/README_data/LimitCaseTransition.gif" alt="Body-fitted 100 Re cylinder velocity field [m/s]." style="width: 800px;"/>
+</p>
+
+
 # Clustering comparison
 The comparison of the clustering techniques shown in our paper is also included in this repository by launching the [clustering_comparison.py](clustering_comparison.py) script.
 ![Alt Text](README_data/clustering_techniques.png)
