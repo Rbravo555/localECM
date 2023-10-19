@@ -41,7 +41,7 @@ if __name__ == '__main__':
     run_example(number_of_functions, number_of_candidate_Gauss_points, function_to_use, constrain_sum_of_weights, use_L2_weighting)
 ```
 
-# Example 1
+# Example 3
 ## Finite Elements Example (section 4.3)
 This example was launched using an in-house Matlab code which we do not provide here.
 
