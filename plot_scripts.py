@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
+
 import itertools
 
 
@@ -142,9 +143,17 @@ def plot_lp_sparsity(lp_matrices,methods, title ):
 
 
 def plot_sparsity(short_and_fat_sparse_matrix, title):
-    plt.spy(short_and_fat_sparse_matrix)
-    plt.xlabel(r'$\bar{\textbf{x}}_j$', size=15, fontweight='bold')
-    plt.ylabel(r'$i$-th function',size=15,fontweight='bold')
+
+    #plt.ylabel(r'$i$-th function',size=15,fontweight='bold')
+    if title=='global':
+        label = plt.ylabel(r'$\mathbf{\hat{\zeta}}$',size=20,fontweight='bold',rotation=0, labelpad=15)
+        label.set_position((label.get_position()[0], -0.3))
+        plt.spy(np.sum(short_and_fat_sparse_matrix, axis=0, keepdims=True))
+        plt.yticks([])
+    else:
+        plt.spy(short_and_fat_sparse_matrix)
+        plt.ylabel(r'$\mathbf{\zeta}^{(i)}$',size=20,fontweight='bold',rotation=0,labelpad=15)
+    plt.xlabel(r'index $j$', size=15, fontweight='bold')
     plt.tight_layout()
     plt.savefig(f'sparsity_{title}.pdf', bbox_inches='tight')
     plt.show()
