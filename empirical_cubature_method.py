@@ -10,7 +10,7 @@ except ImportError as e:
 class EmpiricalCubatureMethod():
     """
     This class selects a subset of elements and corresponding positive weights necessary for the construction of a hyper-reduced order model
-    Reference: Hernandez 2020. "A multiscale method for periodic structures using domain decomposition and ECM-hyperreduction"
+    Reference: Local-ECM: An empirical cubature hyper-reduction method adapted to local reduced order models." arXiv preprint arXiv:2310.15769 (2023)"
     """
 
 
