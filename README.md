@@ -63,6 +63,18 @@ Here is the evolution of the weights mentioned.
 The comparison of the clustering techniques shown in our paper is also included in this repository by launching the [clustering_comparison.py](clustering_comparison.py) script.
 ![Alt Text](README_data/clustering_techniques.png)
 
+# Citation
+If this repo has been useful for you, please consider citing us as
 
+```
+@misc{martinez2023localecm,
+      title={Local-ECM: An empirical cubature hyper-reduction method adapted to local reduced order models}, 
+      author={Jose Raul Bravo Martinez and Sebastian Ares de Parga Regalado and Joaquin Alberto Hernandez Ortega and Riccardo Rossi Bernecoli},
+      year={2023},
+      eprint={2310.15769},
+      archivePrefix={arXiv},
+      primaryClass={math-ph}
+}
+```
 
 
