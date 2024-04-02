@@ -58,43 +58,45 @@ def kmedoids_test(test_data):
 
 def E_p(u, c):
     """
-    c: direction vector onto which to project
-    u: vector or colection of column vectors to project onto the direction of c
+    c: direction vector onto which to project.
+    u: vector or collection of column vectors to project onto the direction of c.
     """
-    c = c.reshape(-1,1)
-    if len(u.shape)==1:
-        u = u.reshape(-1,1)
-    projection_of_u_onto_c = ((c@c.T) / (c.T@c)) @ u
-    projection_error = np.linalg.norm(u - projection_of_u_onto_c, axis=0) / np.linalg.norm(u,axis=0)
+    c = c.reshape(-1, 1)
+    if len(u.shape) == 1:
+        u = u.reshape(-1, 1)
+    projection_coefficients = (u.T @ c) / (c.T @ c)
+    projection_of_u_onto_c = projection_coefficients.T * c
+    projection_error = np.linalg.norm(u - projection_of_u_onto_c, axis=0) / np.linalg.norm(u, axis=0)
     return projection_error
+
 
 def PEBL(Snapshots, bisection_tolerance=0.15,  POD_tolerance=1e-3):
     #stage 1, generation of bisection tree with accuracy 'bisection_tolerance'
     max_index = np.argmax( np.linalg.norm(Snapshots, axis=0) )
     first_snapshot = Snapshots[:,max_index]
-    Tree = Node([first_snapshot, Snapshots])
+    Tree = Node([first_snapshot,np.arange(0,Snapshots.shape[1], 1, dtype=int)])
     bisect_flag = True
     while bisect_flag == True:
         bisect_flag = False
         for leaf in Tree.leaves():
-            errors = E_p(leaf.val[1], leaf.val[0])
+            errors = E_p(Snapshots[:,leaf.val[1]], leaf.val[0])
             max_error = max(errors)
             print(max_error)
             if max_error > bisection_tolerance:
                 bisect_flag = True
                 #find next anchor point
                 max_index = np.argmax(errors)
-                c_new = leaf.val[1][:,max_index]
-                new_errors = E_p(leaf.val[1], c_new)
+                c_new = Snapshots[:,leaf.val[1]][:,max_index]
+                new_errors = E_p(Snapshots[:,leaf.val[1]], c_new)
                 indexes_left = np.where( errors <= new_errors)
                 indexes_right = np.where( errors > new_errors)
                 #divide the snapshots among the two children
-                leaf.left =  Node([leaf.val[0], leaf.val[1][:,indexes_left[0]]])
-                leaf.right = Node([c_new, leaf.val[1][:,indexes_right[0]]])
+                leaf.left =  Node([leaf.val[0], leaf.val[1][indexes_left[0]]])
+                leaf.right = Node([c_new, leaf.val[1][indexes_right[0]]])
                 leaf.val[1] = None
     #stage 2, generation of local POD bases'
     for leaf in Tree.leaves():
-        Phi_i = ObtainBasis(leaf.val[1], POD_tolerance)
+        Phi_i = ObtainBasis(Snapshots[:,leaf.val[1]], POD_tolerance)
         leaf.val.append(Phi_i)
     return Tree
 
@@ -150,7 +152,7 @@ def pebl_test(test_data):
     Tree = PEBL(test_data.T, 0.68)
     plt.figure()
     for leaf in Tree.leaves():
-        plt.scatter(leaf.val[1][0,:], leaf.val[1][1,:])
+        plt.scatter(test_data[leaf.val[1],:][:,0], test_data[leaf.val[1],:][:,1])
         plt.scatter(leaf.val[0][0], leaf.val[0][1], c='k',marker="s", s=150)
     plt.title(r"\textbf{PEBL clustering}")
     plt.savefig('PEBL clustering.pdf',bbox_inches='tight' )
