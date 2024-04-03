@@ -69,36 +69,63 @@ def E_p(u, c):
     projection_error = np.linalg.norm(u - projection_of_u_onto_c, axis=0) / np.linalg.norm(u, axis=0)
     return projection_error
 
+class PEBL:
 
-def PEBL(Snapshots, bisection_tolerance=0.15,  POD_tolerance=1e-3):
-    #stage 1, generation of bisection tree with accuracy 'bisection_tolerance'
-    max_index = np.argmax( np.linalg.norm(Snapshots, axis=0) )
-    first_snapshot = Snapshots[:,max_index]
-    Tree = Node([first_snapshot,np.arange(0,Snapshots.shape[1], 1, dtype=int)])
-    bisect_flag = True
-    while bisect_flag == True:
-        bisect_flag = False
-        for leaf in Tree.leaves():
-            errors = E_p(Snapshots[:,leaf.val[1]], leaf.val[0])
-            max_error = max(errors)
-            print(max_error)
-            if max_error > bisection_tolerance:
-                bisect_flag = True
-                #find next anchor point
-                max_index = np.argmax(errors)
-                c_new = Snapshots[:,leaf.val[1]][:,max_index]
-                new_errors = E_p(Snapshots[:,leaf.val[1]], c_new)
-                indexes_left = np.where( errors <= new_errors)
-                indexes_right = np.where( errors > new_errors)
-                #divide the snapshots among the two children
-                leaf.left =  Node([leaf.val[0], leaf.val[1][indexes_left[0]]])
-                leaf.right = Node([c_new, leaf.val[1][indexes_right[0]]])
-                leaf.val[1] = None
-    #stage 2, generation of local POD bases'
-    for leaf in Tree.leaves():
-        Phi_i = ObtainBasis(Snapshots[:,leaf.val[1]], POD_tolerance)
-        leaf.val.append(Phi_i)
-    return Tree
+    def __init__(self, bisection_tolerance=0.15,  POD_tolerance=1e-3):
+        self.bisection_tolerance = bisection_tolerance
+        self.POD_tolerance = POD_tolerance
+
+
+    def fit(self, Snapshots):
+        self.Snapshots = Snapshots
+        self.Stage_1()
+        self.Stage_2()
+        return self
+
+
+    def Stage_1(self):
+        #stage 1, generation of bisection tree with accuracy 'bisection_tolerance'
+        max_index = np.argmax( np.linalg.norm(self.Snapshots, axis=0) )
+        first_snapshot = self.Snapshots[:,max_index]
+        self.Tree = Node([first_snapshot,np.arange(0,self.Snapshots.shape[1], 1, dtype=int)])
+        bisect_flag = True
+        while bisect_flag == True:
+            bisect_flag = False
+            for leaf in self.Tree.leaves():
+                errors = E_p(self.Snapshots[:,leaf.val[1]], leaf.val[0])
+                max_error = max(errors)
+                print(max_error)
+                if max_error > self.bisection_tolerance:
+                    bisect_flag = True
+                    #find next anchor point
+                    max_index = np.argmax(errors)
+                    c_new = self.Snapshots[:,leaf.val[1]][:,max_index]
+                    new_errors = E_p(self.Snapshots[:,leaf.val[1]], c_new)
+                    indexes_left = np.where( errors <= new_errors)
+                    indexes_right = np.where( errors > new_errors)
+                    #divide the snapshots among the two children
+                    leaf.left =  Node([leaf.val[0], leaf.val[1][indexes_left[0]]])
+                    leaf.right = Node([c_new, leaf.val[1][indexes_right[0]]])
+                    leaf.val[1] = None
+
+    def Stage_2(self):
+        #stage 2, generation of local POD bases'
+        index = 0
+        for leaf in self.Tree.leaves():
+            Phi_i = ObtainBasis(self.Snapshots[:,leaf.val[1]], self.POD_tolerance)
+            leaf.val.append(Phi_i)
+            leaf.val.append(index)
+            index+=1
+
+
+    def predict(self, u):
+        current_node = self.Tree
+        while not current_node.is_leaf():
+            if E_p(u, current_node.left.val[0]) < E_p(u, current_node.right.val[0]):
+                current_node = current_node.left
+            else:
+                current_node = current_node.right
+        return current_node.val[3]
 
 
 def ObtainBasis(Snapshots, truncation_tolerance=0):
@@ -148,6 +175,10 @@ class Node:
             current_nodes = next_nodes
         return leaves
 
+    def is_leaf(self):
+        return self.left is None and self.right is None
+
+
 def pebl_test(test_data):
     Tree = PEBL(test_data.T, 0.68)
     plt.figure()
@@ -159,7 +190,21 @@ def pebl_test(test_data):
     plt.show()
 
 
-
+def test_predict_pebl(test_data):
+    pebl_object = PEBL(0.68).fit(test_data.T)
+    plt.figure()
+    u = test_data.T[:,np.random.randint(0, 1000)]
+    leaves = pebl_object.Tree.leaves()
+    predicted_index = pebl_object.predict(u)
+    for i in range(len(leaves)):
+        if i==predicted_index:
+            plt.scatter(test_data[leaves[i].val[1],:][:,0], test_data[leaves[i].val[1],:][:,1])
+        else:
+            plt.scatter(test_data[leaves[i].val[1],:][:,0], test_data[leaves[i].val[1],:][:,1], alpha=0.2)
+    plt.scatter(u[0], u[1], c='k',marker="s", s=150)
+    plt.title(r"\textbf{PEBL online prediction}")
+    plt.savefig('PEBL prediction.pdf',bbox_inches='tight' )
+    plt.show()
 
 if __name__=='__main__':
     np.random.seed(42) #seed the random sampling
@@ -173,3 +218,4 @@ if __name__=='__main__':
     kmedoids_test(test_data)
     fuzzy_c_means(test_data)
     pebl_test(test_data)
+    test_predict_pebl(test_data)
