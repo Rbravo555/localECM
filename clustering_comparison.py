@@ -180,9 +180,9 @@ class Node:
 
 
 def pebl_test(test_data):
-    Tree = PEBL(test_data.T, 0.68)
+    pebl_object = PEBL(0.68).fit(test_data.T)
     plt.figure()
-    for leaf in Tree.leaves():
+    for leaf in pebl_object.Tree.leaves():
         plt.scatter(test_data[leaf.val[1],:][:,0], test_data[leaf.val[1],:][:,1])
         plt.scatter(leaf.val[0][0], leaf.val[0][1], c='k',marker="s", s=150)
     plt.title(r"\textbf{PEBL clustering}")
