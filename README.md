@@ -67,13 +67,14 @@ The comparison of the clustering techniques shown in our paper is also included 
 If this repo has been useful for you, please consider citing us as
 
 ```
-@misc{martinez2023localecm,
-      title={Local-ECM: An empirical cubature hyper-reduction method adapted to local reduced order models},
-      author={Jose Raul Bravo Martinez and Sebastian Ares de Parga Regalado and Joaquin Alberto Hernandez Ortega and Riccardo Rossi Bernecoli},
-      year={2023},
+@misc{bravo2024subspaceadaptiveweightscubaturemethod,
+      title={A subspace-adaptive weights cubature method with application to the local hyperreduction of parameterized finite element models},
+      author={J. R. Bravo and J. A. Hernández and S. Ares de Parga and R. Rossi},
+      year={2024},
       eprint={2310.15769},
       archivePrefix={arXiv},
-      primaryClass={math-ph}
+      primaryClass={math-ph},
+      url={https://arxiv.org/abs/2310.15769},
 }
 ```
 
