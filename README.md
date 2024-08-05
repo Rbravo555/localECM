@@ -1,4 +1,4 @@
-![Alt Text](README_data/Paper_screnshot.png)
+![Alt Text](README_data/updated_paper.png)
 
 # Contents
 This folder contains the Python scripts required to reproduce the examples from [this paper](https://arxiv.org/abs/2310.15769).
@@ -52,7 +52,7 @@ An observation that we highlight in our paper is the limit case (having as many 
 ![Alt Text](README_data/TrainingTrajectory.png)
 
 
-Here is the evolution of the weights mentioned. 
+Here is the evolution of the weights mentioned.
 
 <p align="center">
   <img src="https://github.com/Rbravo555/localECM/blob/main/README_data/LimitCaseTransition.gif" alt="Body-fitted 100 Re cylinder velocity field [m/s]." style="width: 800px;"/>
@@ -68,7 +68,7 @@ If this repo has been useful for you, please consider citing us as
 
 ```
 @misc{martinez2023localecm,
-      title={Local-ECM: An empirical cubature hyper-reduction method adapted to local reduced order models}, 
+      title={Local-ECM: An empirical cubature hyper-reduction method adapted to local reduced order models},
       author={Jose Raul Bravo Martinez and Sebastian Ares de Parga Regalado and Joaquin Alberto Hernandez Ortega and Riccardo Rossi Bernecoli},
       year={2023},
       eprint={2310.15769},
